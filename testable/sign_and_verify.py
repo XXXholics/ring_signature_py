@@ -1,11 +1,35 @@
 import random, sys
 from hashlib import sha256, sha3_256
 
+# checks if g is a primitive root of p, returns boolean
+def is_primitive_root(g, p):
+    n = p - 1
+    factors = []
+    i = 2
+    while i * i <= n:
+        if n % i == 0:
+            factors.append(i)
+            while n % i == 0:
+                n //= i
+        i += 1
+    if n > 1:
+        factors.append(n)
+
+    for factor in factors:
+        if pow(g, (p-1) // factor, p) == 1:
+            return False
+    return True
+
 # function to create s (secret key) and v (public key) with given g (generator) and p (prime mod)  
 def generate_keys(g, p):
 
+    # full prime check is expensive
     if (p < 3):
-        return "The second argument, p, must be greater than 2!"
+        return "The second argument, p, must be greater than 2"
+    
+    # checks if g is a primitive root of p
+    if not (is_primitive_root(p, g)):
+        return "g must be a primitive root of p"
 
     # secret key s
     s = random.randint(1, p-2)
@@ -15,31 +39,10 @@ def generate_keys(g, p):
 
     return s, v
 
-# function to generate n random secret and public keys
-def generate_n_random_keys(n):
-    keys_list = []
-    for _ in range(n):
-        x_temp, y_temp = generate_keys(g, p)
-        keys_list.append([x_temp, y_temp])
-    return keys_list
-
-def concat_and_shuffle_total_keys(keys_list, x, y):
-    keys_list.append([x, y])
-    random.shuffle(keys_list)
-    return keys_list
-
+# returns the index of public key y in keys_list
 def get_real_key_position(keys_list, y):
     public_key_list = [key[1] for key in keys_list]
     return public_key_list.index(y)
-
-def get_Y(keys_list):
-    public_key_list = [key[1] for key in keys_list]
-    Y = ''.join([str(i) for i in public_key_list])
-    return Y
-
-def get_initial_random_r_and_R(g, p):
-    r, R = generate_keys(g, p)
-    return r, R
 
 def sign(msg, Y, g, r, p, keys_list, x_real, y_real):
     idx = (get_real_key_position(total_keys_list, y_real) + 1) % len(total_keys_list)
@@ -86,16 +89,46 @@ def verify(total_res):
     tag = total_res['tag']
     
     for i in range(len(sig_list)):
-        print('temp_e_V:',  temp_e_V)
+        # print('temp_e_V:',  temp_e_V)
         temp_sig = sig_list[i]
         temp_y = public_key_list[i]
         calculation = (pow(g, temp_sig, p)*pow(temp_y, temp_e_V, p)) % p
         calculation_1 = (pow(h, temp_sig, p)*pow(tag, temp_e_V, p)) % p
         temp_e_V = int(sha256((str(Y) + str(tag) + str(msg) + str(calculation) + str(calculation_1)).encode()).hexdigest(), 16)
     
-    print(e1)
-    print(temp_e_V)
-    print(temp_e_V == e1) 
+    # print(e1)
+    # print(temp_e_V)
+    # print(temp_e_V == e1) 
+
+    if (temp_e_V == e1):
+        print("Verified")
+    else:
+        print("Not verified")
+
+# function to generate n random secret and public keys
+def generate_n_random_keys(n):
+    keys_list = []
+    for _ in range(n):
+        x_temp, y_temp = generate_keys(g, p)
+        keys_list.append([x_temp, y_temp])
+    return keys_list
+
+# append secret key x and public key y to keys_list and shuffles they keys
+def concat_and_shuffle_total_keys(keys_list, x, y):
+    keys_list.append([x, y])
+    random.shuffle(keys_list)
+    return keys_list
+
+# concatenate all the public keys into a string
+def get_Y(keys_list):
+    public_key_list = [key[1] for key in keys_list]
+    Y = ''.join([str(i) for i in public_key_list])
+    return Y
+
+# generates and returns separated secret and public keys
+def get_initial_random_r_and_R(g, p):
+    r, R = generate_keys(g, p)
+    return r, R
 
 # driver code  
 if len(sys.argv) == 6:
@@ -117,4 +150,4 @@ if len(sys.argv) == 6:
     if (sys.argv[1] == '-v'):
         verify(total_res)
 else:
-    print("Execute the code like this: python sign_and_verify.py <-s>/<-v> <g> <p> <m> <n>\nwhere -s specifies sign mode, -v specifies sign and verify mode, g is a generator, p a large prime, m is the message to be signed and n is the number of signers in the group")
+    print("Try executing program like this: python sign_and_verify.py <-s>/<-v> <g> <p> <m> <n>\nwhere -s specifies sign mode, -v specifies sign and verify mode, g is a generator, p a large prime, m is the message to be signed and n is the number of signers in the group")
