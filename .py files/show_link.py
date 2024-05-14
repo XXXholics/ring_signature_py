@@ -154,18 +154,21 @@ if len(sys.argv) == 6:
     display_tag_link(total_res)
 
     # sign the second message within the same group, show that the tag remains the same
+    Y = get_Y(total_keys_list)
     total_res = sign(msg2, Y, g, r, p, total_keys_list, x_real, y_real)
     display_tag_link(total_res)
 
-    # put the signer in a new group, show that the tag remains the same
+    # put the signer in a new group, show that the tag changes
     random_keys_list = generate_n_random_keys(random_keys_count)
     total_keys_list = concat_and_shuffle_total_keys(random_keys_list, x_real, y_real)
+    Y = get_Y(total_keys_list)
     total_res = sign(msg2, Y, g, r, p, total_keys_list, x_real, y_real)
     display_tag_link(total_res)
 
     # use the same group but new real signer, show that the tag changes
     x_real, y_real = generate_keys(g, p)
     total_keys_list = concat_and_shuffle_total_keys(random_keys_list, x_real, y_real)
+    Y = get_Y(total_keys_list)
     total_res = sign(msg2, Y, g, r, p, total_keys_list, x_real, y_real)
     display_tag_link(total_res)
 else:
