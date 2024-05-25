@@ -64,7 +64,7 @@ def sign(msg, Y, g, r, p, keys_list, x_real, y_real):
         e_list[idx] = temp_e
         
     # q is the order for p, see paper page 6, part 4, the first sentence. 
-    q = p - 1
+    q = (p-1)//2
     s_real = (r - x_real * e_list[idx]) % q
     sig_list[idx] = s_real
     public_key_list = [key[1] for key in keys_list] 
